@@ -139,7 +139,7 @@ function readValue(ctx: Context): unknown {
   }
 }
 
-export function decodeCBOR(buf: Uint8Array) {
+export function decodeCBOR(buf: Uint8Array): unknown {
   const ctx: Context = { buf, view: undefined, pos: 0 };
   return readValue(ctx);
 }

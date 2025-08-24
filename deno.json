@@ -1,9 +1,12 @@
 {
   "name": "@char/cbor",
+  "version": "0.1.0",
+  "license": "0BSD",
   "exports": {
     ".": "./lib/mod.ts"
   },
   "tasks": {
     "bench": "deno bench -c ./deno.bench.json -A ./bench.ts"
-  }
+  },
+  "publish": { "include": ["./README.md", "./lib", "./deno.json"] }
 }
