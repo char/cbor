@@ -1,0 +1,6 @@
+{
+  "name": "@char/cbor",
+  "exports": {
+    ".": "./lib/mod.ts"
+  }
+}
