@@ -2,5 +2,8 @@
   "name": "@char/cbor",
   "exports": {
     ".": "./lib/mod.ts"
+  },
+  "tasks": {
+    "bench": "deno bench -c ./deno.bench.json -A ./bench.ts"
   }
 }
