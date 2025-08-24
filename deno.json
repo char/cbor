@@ -1,6 +1,6 @@
 {
   "name": "@char/cbor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "0BSD",
   "exports": {
     ".": "./lib/mod.ts"

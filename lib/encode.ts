@@ -241,13 +241,13 @@ function writeValue(ctx: Context, root: unknown): void {
           break;
         }
 
-        if ("toJSON" in val) {
-          stack[sp++] = val.toJSON();
+        if ("toCBOR" in val) {
+          stack[sp++] = val.toCBOR();
           break;
         }
 
-        if ("toCBOR" in val) {
-          stack[sp++] = val.toCBOR();
+        if ("toJSON" in val) {
+          stack[sp++] = val.toJSON();
           break;
         }
       }
