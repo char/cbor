@@ -63,6 +63,21 @@ function readF64(ctx: Context): number {
 }
 
 function readString(ctx: Context, length: number): string {
+  // fast path for short ascii strings
+  if (length < 24) {
+    outer: do {
+      const codes = new Array(length);
+      for (let i = 0; i < length; i++) {
+        const v = ctx.buf[ctx.pos + i];
+        if (v & 0x80) break outer;
+        codes[i] = v;
+      }
+
+      ctx.pos += length;
+      return String.fromCharCode(...codes);
+    } while (false);
+  }
+
   const str = decodeUtf8From(ctx.buf, ctx.pos, length);
   ctx.pos += length;
   return str;
@@ -73,8 +88,6 @@ function readBytes(ctx: Context, length: number): Uint8Array {
 }
 
 function readValue(ctx: Context): unknown {
-  // TODO: maybe this should be stack-based
-
   const header = readU8(ctx);
   const type = header >> 5;
   const info = header & 0x1f;
