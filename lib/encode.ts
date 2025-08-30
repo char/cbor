@@ -194,6 +194,11 @@ function writeValue(ctx: Context, root: unknown): void {
         writeString(ctx, val);
         break;
       }
+      case "undefined": {
+        resizeIfNeeded(ctx, 1);
+        writeU8(ctx, 0xf7);
+        break;
+      }
       // deno-lint-ignore no-fallthrough
       case "object": {
         if (val === null) {
