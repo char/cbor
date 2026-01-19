@@ -1,8 +1,6 @@
 {
   "lock": false,
   "imports": {
-    "@char/cbor": "./lib/mod.ts",
-    "cbor2": "npm:cbor2@2.0.1",
-    "cbor-x": "npm:cbor-x@1.6.0"
+    "@char/cbor": "./lib/mod.ts"
   }
 }

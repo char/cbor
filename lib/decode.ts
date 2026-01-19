@@ -2,36 +2,25 @@ import { decodeUtf8From } from "./u8.ts";
 
 interface Context {
   buf: Uint8Array;
-  view: DataView | undefined;
+  view: DataView;
   pos: number;
 }
 
-function readU8(ctx: Context): number {
-  return ctx.buf[ctx.pos++];
-}
 function readU16(ctx: Context): number {
-  return (ctx.buf[ctx.pos++] << 8) | ctx.buf[ctx.pos++];
+  const v = ctx.view.getUint16(ctx.pos);
+  ctx.pos += 2;
+  return v;
 }
 function readU32(ctx: Context): number {
-  return (
-    (ctx.buf[ctx.pos++] << 24) |
-    (ctx.buf[ctx.pos++] << 16) |
-    (ctx.buf[ctx.pos++] << 8) |
-    ctx.buf[ctx.pos++]
-  );
+  const v = ctx.view.getUint32(ctx.pos);
+  ctx.pos += 4;
+  return v;
 }
 function readU53(ctx: Context): number {
-  const hi =
-    (ctx.buf[ctx.pos++] << 24) |
-    (ctx.buf[ctx.pos++] << 16) |
-    (ctx.buf[ctx.pos++] << 8) |
-    ctx.buf[ctx.pos++];
-  const lo =
-    (ctx.buf[ctx.pos++] << 24) |
-    (ctx.buf[ctx.pos++] << 16) |
-    (ctx.buf[ctx.pos++] << 8) |
-    ctx.buf[ctx.pos++];
-  return (hi >>> 0) * 0x100000000 + (lo >>> 0);
+  const hi = ctx.view.getUint32(ctx.pos);
+  const lo = ctx.view.getUint32(ctx.pos + 4);
+  ctx.pos += 8;
+  return hi * 0x100000000 + lo;
 }
 
 function readArg(ctx: Context, info: number): number {
@@ -39,7 +28,7 @@ function readArg(ctx: Context, info: number): number {
 
   switch (info) {
     case 24:
-      return readU8(ctx);
+      return ctx.buf[ctx.pos++];
     case 25:
       return readU16(ctx);
     case 26:
@@ -52,31 +41,140 @@ function readArg(ctx: Context, info: number): number {
 }
 
 function readF64(ctx: Context): number {
-  const view = (ctx.view ??= new DataView(
-    ctx.buf.buffer,
-    ctx.buf.byteOffset,
-    ctx.buf.byteLength,
-  ));
-  const v = view.getFloat64(ctx.pos);
+  const v = ctx.view.getFloat64(ctx.pos);
   ctx.pos += 8;
   return v;
 }
 
+const fromCharCode = String.fromCharCode;
 function readString(ctx: Context, length: number): string {
   // fast path for short ascii strings
-  if (length < 24) {
-    outer: do {
-      const codes = new Array(length);
-      for (let i = 0; i < length; i++) {
-        const v = ctx.buf[ctx.pos + i];
-        if (v & 0x80) break outer;
-        codes[i] = v;
-      }
+  // lifted & adapted from cbor-x
+  outer: do {
+    if (length >= 16) break outer;
 
-      ctx.pos += length;
-      return String.fromCharCode(...codes);
-    } while (false);
-  }
+    if (length < 4) {
+      if (length < 2) {
+        if (length === 0) return "";
+        const a = ctx.buf[ctx.pos++];
+        if ((a & 0x80) !== 0) {
+          ctx.pos -= 1;
+          break outer;
+        }
+        return fromCharCode(a);
+      } else {
+        const a = ctx.buf[ctx.pos++];
+        const b = ctx.buf[ctx.pos++];
+        if ((a | b) & 0x80) {
+          ctx.pos -= 2;
+          break outer;
+        }
+        if (length < 3) return fromCharCode(a, b);
+        const c = ctx.buf[ctx.pos++];
+        if (c & 0x80) {
+          ctx.pos -= 3;
+          break outer;
+        }
+        return fromCharCode(a, b, c);
+      }
+    } else {
+      const a = ctx.buf[ctx.pos++];
+      const b = ctx.buf[ctx.pos++];
+      const c = ctx.buf[ctx.pos++];
+      const d = ctx.buf[ctx.pos++];
+      if ((a | b | c | d) & 0x80) {
+        ctx.pos -= 4;
+        break outer;
+      }
+      if (length < 6) {
+        if (length === 4) return fromCharCode(a, b, c, d);
+        const e = ctx.buf[ctx.pos++];
+        if ((a | b | c | d | e) & 0x80) {
+          ctx.pos -= 5;
+          break outer;
+        }
+        return fromCharCode(a, b, c, d, e);
+      } else if (length < 8) {
+        const e = ctx.buf[ctx.pos++];
+        const f = ctx.buf[ctx.pos++];
+        if ((a | b | c | d | e | f) & 0x80) {
+          ctx.pos -= 6;
+          break outer;
+        }
+        if (length < 7) return fromCharCode(a, b, c, d, e, f);
+        const g = ctx.buf[ctx.pos++];
+        if ((a | b | c | d | e | f | g) & 0x80) {
+          ctx.pos -= 7;
+          break outer;
+        }
+        return fromCharCode(a, b, c, d, e, f, g);
+      } else {
+        const e = ctx.buf[ctx.pos++];
+        const f = ctx.buf[ctx.pos++];
+        const g = ctx.buf[ctx.pos++];
+        const h = ctx.buf[ctx.pos++];
+        if ((e | f | g | h) & 0x80) {
+          ctx.pos -= 8;
+          break outer;
+        }
+        if (length < 10) {
+          if (length === 8) return fromCharCode(a, b, c, d, e, f, g, h);
+          const i = ctx.buf[ctx.pos++];
+          if (i & 0x80) {
+            ctx.pos -= 9;
+            break outer;
+          }
+          return fromCharCode(a, b, c, d, e, f, g, h, i);
+        } else if (length < 12) {
+          const i = ctx.buf[ctx.pos++];
+          const j = ctx.buf[ctx.pos++];
+          if ((a | b | c | d | e | f | g | h | i | j) & 0x80) {
+            ctx.pos -= 10;
+            break outer;
+          }
+          if (length < 11) return fromCharCode(a, b, c, d, e, f, g, h, i, j);
+          const k = ctx.buf[ctx.pos++];
+          if (k & 0x80) {
+            ctx.pos -= 11;
+            break outer;
+          }
+          return fromCharCode(a, b, c, d, e, f, g, h, i, j, k);
+        } else {
+          const i = ctx.buf[ctx.pos++];
+          const j = ctx.buf[ctx.pos++];
+          const k = ctx.buf[ctx.pos++];
+          const l = ctx.buf[ctx.pos++];
+          if ((i | j | k | l) & 0x80) {
+            ctx.pos -= 12;
+            break outer;
+          }
+          if (length < 14) {
+            if (length === 12) return fromCharCode(a, b, c, d, e, f, g, h, i, j, k, l);
+            const m = ctx.buf[ctx.pos++];
+            if ((m & 0x80) > 0) {
+              ctx.pos -= 13;
+              break outer;
+            }
+            return fromCharCode(a, b, c, d, e, f, g, h, i, j, k, l, m);
+          } else {
+            const m = ctx.buf[ctx.pos++];
+            const n = ctx.buf[ctx.pos++];
+            if ((m | n) & 0x80) {
+              ctx.pos -= 14;
+              break outer;
+            }
+            if (length < 15) return fromCharCode(a, b, c, d, e, f, g, h, i, j, k, l, m, n);
+            const o = ctx.buf[ctx.pos++];
+            if (o & 0x80) {
+              ctx.pos -= 15;
+              break outer;
+            }
+            return fromCharCode(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o);
+          }
+        }
+      }
+    }
+  } while (false);
 
   const str = decodeUtf8From(ctx.buf, ctx.pos, length);
   ctx.pos += length;
@@ -88,7 +186,7 @@ function readBytes(ctx: Context, length: number): Uint8Array {
 }
 
 function readValue(ctx: Context): unknown {
-  const header = readU8(ctx);
+  const header = ctx.buf[ctx.pos++];
   const type = header >> 5;
   const info = header & 0x1f;
 
@@ -111,7 +209,7 @@ function readValue(ctx: Context): unknown {
       const len = readArg(ctx, info);
       const obj: Record<string, unknown> = {};
       for (let i = 0; i < len; i++) {
-        const keyHeader = readU8(ctx);
+        const keyHeader = ctx.buf[ctx.pos++];
         const keyType = keyHeader >> 5;
         const keyInfo = keyHeader & 0x1f;
         if (keyType !== 3) throw new TypeError(`invalid map key type (${keyType}, ${keyInfo})`);
@@ -155,6 +253,10 @@ function readValue(ctx: Context): unknown {
 }
 
 export function decodeCBOR(buf: Uint8Array): unknown {
-  const ctx: Context = { buf, view: undefined, pos: 0 };
+  const ctx: Context = {
+    buf,
+    view: new DataView(buf.buffer, buf.byteOffset, buf.byteLength),
+    pos: 0,
+  };
   return readValue(ctx);
 }
