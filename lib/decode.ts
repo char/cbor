@@ -252,6 +252,21 @@ function readValue(ctx: Context): unknown {
   }
 }
 
+/**
+ * decode CBOR-formatted data into a JavaScript value
+ *
+ * ```ts
+ * import { decodeCBOR } from "./decode.ts";
+ *
+ * // decode CBOR data:
+ * const cborData = new Uint8Array([0x65, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
+ * const decoded = decodeCBOR(cborData); // "hello"
+ *
+ * // works on roundtrip:
+ * const encoded = encodeCBOR({ name: "Alice", age: 30 });
+ * const data = decodeCBOR(encoded); // { name: "Alice", age: 30 }
+ * ```
+ */
 export function decodeCBOR(buf: Uint8Array): unknown {
   const ctx: Context = {
     buf,

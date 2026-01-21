@@ -273,6 +273,22 @@ function createContext(): Context {
   };
 }
 
+/**
+ * encode a JavaScript value into CBOR
+ *
+ * if an object has a `toCBOR()` or `toJSON()` method,
+ * it will be used to transform the value before encoding.
+ *
+ * ```ts
+ * import { encodeCBOR, decodeCBOR } from "./encode.ts";
+ *
+ * // encode a simple object
+ * const obj = { name: "Alice", age: 30, active: true };
+ * const encoded = encodeCBOR(obj);
+ * const decoded = decodeCBOR(encoded);
+ * assertEquals(decoded, obj);
+ * ```
+ */
 export const encodeCBOR = (value: unknown): Uint8Array => {
   const ctx = createContext();
 
