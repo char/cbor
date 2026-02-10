@@ -189,24 +189,25 @@ function readValue(ctx: Context): unknown {
   const header = ctx.buf[ctx.pos++];
   const type = header >> 5;
   const info = header & 0x1f;
+  const arg = type === 7 ? 0 : info < 24 ? info : readArg(ctx, info);
 
   switch (type) {
     case 0:
-      return readArg(ctx, info);
+      return arg;
     case 1:
-      return -1 - readArg(ctx, info);
+      return -1 - arg;
     case 2:
-      return readBytes(ctx, readArg(ctx, info));
+      return readBytes(ctx, arg);
     case 3:
-      return readString(ctx, readArg(ctx, info));
+      return readString(ctx, arg);
     case 4: {
-      const len = readArg(ctx, info);
+      const len = arg;
       const arr = new Array(len);
       for (let i = 0; i < len; i++) arr[i] = readValue(ctx);
       return arr;
     }
     case 5: {
-      const len = readArg(ctx, info);
+      const len = arg;
       const obj: Record<string, unknown> = {};
       for (let i = 0; i < len; i++) {
         const keyHeader = ctx.buf[ctx.pos++];
@@ -214,7 +215,7 @@ function readValue(ctx: Context): unknown {
         const keyInfo = keyHeader & 0x1f;
         if (keyType !== 3) throw new TypeError(`invalid map key type (${keyType}, ${keyInfo})`);
 
-        const keyLen = readArg(ctx, keyInfo);
+        const keyLen = keyInfo < 24 ? keyInfo : readArg(ctx, keyInfo);
         const k = readString(ctx, keyLen);
         const v = readValue(ctx);
 

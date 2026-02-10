@@ -1,3 +1,5 @@
+// deno-lint-ignore-file no-import-prefix no-unversioned-import
+
 import { decodeCBOR, encodeCBOR } from "@char/cbor";
 import * as cborx from "npm:cbor-x";
 // import * as cbor2 from "npm:cbor2";
@@ -68,10 +70,10 @@ Deno.bench("jsr @char/cbor", { group: "decode" }, () => {
   }
 });
 
-/* Deno.bench("cbor-x", { group: "decode" }, () => {
+Deno.bench("cbor-x", { group: "decode" }, () => {
   const results = new Array(BATCH_SIZE);
 
   for (let i = 0; i < results.length; i++) {
     results[i] = cborx.decode(snapshotData);
   }
-}); */
+});
