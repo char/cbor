@@ -131,7 +131,7 @@ function writeString(ctx: Context, val: string): void {
     outer: do {
       for (let i = 0, j = ctx.pos + 1; i < strLength; i++, j++) {
         const c = val.charCodeAt(i);
-        if (c & 0x80) {
+        if (c & 0xff80) {
           break outer;
         }
         ctx.buf[j] = c;
