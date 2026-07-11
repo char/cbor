@@ -11,6 +11,7 @@
   "imports": {
     "@char/cbor": "./lib/mod.ts",
     "@hegeldev/hegel": "./vendor/hegel-deno/src/index.ts",
-    "@hegeldev/hegel/generators": "./vendor/hegel-deno/src/generators/index.ts"
+    "@hegeldev/hegel/generators": "./vendor/hegel-deno/src/generators/index.ts",
+    "@std/assert": "jsr:@std/assert@^1.0.14"
   }
 }
