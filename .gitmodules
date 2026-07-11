@@ -1,0 +1,3 @@
+[submodule "vendor/hegel-deno"]
+	path = vendor/hegel-deno
+	url = https://github.com/char/hegel-deno.git

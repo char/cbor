@@ -1,0 +1,16 @@
+{
+  "lock": false,
+  "tasks": {
+    "fetch-libhegel": "deno run -A ./vendor/hegel-deno/scripts/fetch-libhegel.ts",
+    "prop-test": {
+      "command": "deno test -c ./deno.test.json --allow-env --allow-read --allow-ffi ./prop-test.ts",
+      "dependencies": ["fetch-libhegel"]
+    },
+    "test": { "dependencies": ["fetch-libhegel", "prop-test"] }
+  },
+  "imports": {
+    "@char/cbor": "./lib/mod.ts",
+    "@hegeldev/hegel": "./vendor/hegel-deno/src/index.ts",
+    "@hegeldev/hegel/generators": "./vendor/hegel-deno/src/generators/index.ts"
+  }
+}

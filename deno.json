@@ -6,7 +6,8 @@
     ".": "./lib/mod.ts"
   },
   "tasks": {
-    "bench": "deno bench -c ./deno.bench.json -A ./bench.ts"
+    "bench": "deno bench -c ./deno.bench.json -A ./bench.ts",
+    "test": "deno task -c ./deno.test.json test"
   },
   "publish": { "include": ["./README.md", "./lib", "./deno.json"] }
 }
