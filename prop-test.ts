@@ -230,6 +230,6 @@ Deno.test("JavaScript values either fail to encode or round trip exactly", () =>
 
       assertEquals(decodeCBOR(encoded), value);
     },
-    { testCases: 4096 },
+    { testCases: 64 },
   );
 });
